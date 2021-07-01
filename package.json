@@ -1,0 +1,24 @@
+{
+  "name": "nuxt-fullpage",
+  "version": "1.0.1",
+  "description": "Nuxt module for creating fullscreen page scroll fast and simple.",
+  "main": "lib/module.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openafg/nuxt-fullpage.git"
+  },
+  "keywords": [
+    "vue",
+    "nuxt",
+    "fullpage"
+  ],
+  "author": "https://afgprogrammer.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/openafg/nuxt-fullpage/issues"
+  },
+  "homepage": "https://github.com/openafg/nuxt-fullpage#readme"
+}
