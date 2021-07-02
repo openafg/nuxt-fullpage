@@ -3,36 +3,48 @@
     <div ref="fullpage" class="full-page">
       <slot />
     </div>
-    <div class="sections-menu">
-      <span
-        class="menu-point"
-        v-bind:class="{active: activeSection == index}"
-        v-on:click="scrollToSection(index)"
-        v-for="(offset, index) in offsets"
-        v-bind:key="index">
-      </span>
+    <div class="full-page-indicators" v-if="showIndicators">
+      <a 
+        href="#"
+        class="indicator"
+        v-for="(item, index) in offsets" 
+        :key="index" 
+        :data-index="index"
+        :class="{'active': index === activeSection}" 
+        @click.prevent="scrollToSection(index, true)">
+          <span></span>
+      </a>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  // props: {_customFullPageOptions},
-  
+  computed: {
+    pluginOption() {
+      return this._customOptions || {};
+    },
+
+    showIndicators() {
+      if (this.pluginOption.hasOwnProperty('showIndicators'))
+        return this.pluginOption.showIndicators
+
+      return true
+    }
+  },
+
   data() {
     return {
       inMove: false,
       activeSection: 0,
       offsets: [],
-      touchStartY: 0
+      touchStartY: 700
     }
   },
 
   mounted() {
     if (process.browser) {
       document.addEventListener('keydown', e => {
-        e.preventDefault();
-
         if (e.keyCode == 40)
           return this.moveUp()
 
@@ -40,67 +52,63 @@ export default {
           return this.moveDown()
       });
 
-      window.addEventListener('DOMMouseScroll', this.handleMouseWheelDOM); // Mozilla Firefox
-      window.addEventListener('mousewheel', this.handleMouseWheel, {
-        passive: false
-      }); // Other browsers
-      window.addEventListener('touchstart', this.touchStart, {
-        passive: false
-      }); // mobile devices
-      window.addEventListener('touchmove', this.touchMove, {
-        passive: false
-      }); //
+      window.addEventListener('DOMMouseScroll', this.handleMouseWheelDOM);
+      window.addEventListener('mousewheel', this.handleMouseWheel, { passive: false });
+      window.addEventListener('touchstart', this.touchStart, { passive: false });
+      window.addEventListener('touchend', this.touchMove, { passive: false });
     }
     
-    this.calculateSectionOffsets()
+    this.calculateSectionOffsets();
   },
 
   methods: {
     calculateSectionOffsets() {
       if (process.browser) {
         let sections = document.querySelectorAll('.section');
-        let length = sections.length;
 
-        for (let i = 0; i < length; i++) {
-          let sectionOffset = sections[i].offsetTop;
-          this.offsets.push(sectionOffset);
-        }
+        sections.forEach(section => {
+          this.offsets.push(section.offsetTop);
+        });
+
+        this.scrollToSection(this.pluginOption.activeSection || 0, true);
       }
     },
 
     scrollToSection(id, force = false) {
-      if (this.inMove && !force) return false;
-      this.activeSection = id;
+      if (this.inMove && !force) return;
 
-      document.querySelectorAll('.section')[id].scrollIntoView({
-        behavior: 'smooth'
-      });
+      this.activeSection = parseInt(id);
+
+      this.$refs['fullpage'].style.transform = 'translate3d(0px, -' + this.offsets[id] + 'px, 0px)';
 
       setTimeout(() => {
         this.inMove = false;
-      }, 1000);
+      }, 400);
     },
 
-    handleMouseWheel: function(e) {
-      if (e.wheelDelta < -50 && !this.inMove) {
-        this.inMove = true
+    handleMouseWheel(e) {
+      let sensitivity = this.pluginOption.mouseWheelSensitivity || 100;
+
+      if (e.wheelDelta < -sensitivity && !this.inMove) {
+        this.inMove = true;
         this.moveUp();
-      } else if (e.wheelDelta > 50 && !this.inMove) {
-        this.inMove = true
+      } else if (e.wheelDelta > sensitivity && !this.inMove) {
+        this.inMove = true;
         this.moveDown();
       }
 
       e.preventDefault();
-      return false;
+      return;
     },
 
     moveDown() {
       this.activeSection--;
 
       if (this.activeSection < 0) {
-        this.activeSection = 0
-        this.inMove = false
-        return false;
+        this.activeSection = 0;
+        this.inMove = false;
+
+        return;
       }
 
       this.scrollToSection(this.activeSection, true);
@@ -110,11 +118,11 @@ export default {
       this.activeSection++;
 
       if (this.activeSection > this.offsets.length)
-        this.activeSection = this.offsets.length - 1
+        this.activeSection = this.offsets.length - 1;
 
       if (this.activeSection > this.offsets.length - 1) {
-        this.inMove = false
-        return false;
+        this.inMove = false;
+        return;
       }
       
       this.scrollToSection(this.activeSection, true);
@@ -122,34 +130,84 @@ export default {
 
     touchStart(e) {
       e.preventDefault();
-      this.touchStartY = e.touches[0].clientY;
+
+      if (e.target.classList.contains('indicator'))
+        return this.scrollToSection(e.target.getAttribute('data-index'), true);
+      
+      this.touchStartY = e.changedTouches[0].screenY;
     },
 
     touchMove(e) {
-      if (this.inMove) return false;
       e.preventDefault();
-      const currentY = e.touches[0].clientY;
-      if (this.touchStartY < currentY) {
+      
+      if (this.inMove) return;
+
+      let touchendY = e.changedTouches[0].screenY;
+      if (touchendY === this.touchStartY) return;
+
+      if (e.target.classList.contains('indicator'))
+        return;
+
+      this.inMove = true;
+      if (this.touchStartY < touchendY) {
         this.moveDown();
       } else {
         this.moveUp();
       }
 
       this.touchStartY = 0;
-      return false;
+      return;
     }
   },
 
   destroyed() {
     if (process.browser) {
-      window.removeEventListener('mousewheel', this.handleMouseWheel, {
-        passive: false
-      }); // Other browsers
-      window.removeEventListener('keydown', this.handleMouseWheelDOM); // Mozilla Firefox
-      window.removeEventListener('DOMMouseScroll', this.handleMouseWheelDOM); // Mozilla Firefox
-      window.removeEventListener('touchstart', this.touchStart); // mobile devices
-      window.removeEventListener('touchmove', this.touchMove); // mobile devices
+      window.removeEventListener('mousewheel', this.handleMouseWheel, { passive: false });
+      window.removeEventListener('keydown', this.handleMouseWheelDOM);
+      window.removeEventListener('DOMMouseScroll', this.handleMouseWheelDOM);
+      window.removeEventListener('touchstart', this.touchStart);
+      window.removeEventListener('touchend', this.touchMove);
     }
   }
 }
 </script>
+<style>
+.full-page {
+  height: 100%;
+  position: relative;
+  transform: translate3d(0px, 0px, 0px);
+  transition: all 900ms ease 0s;
+}
+
+.full-page-indicators {
+  height: 100%;
+  position: absolute;
+  left: 10px;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+  width: 25px;
+}
+
+.full-page-indicators a {
+  border: 1px solid white;
+  border-radius: 50px;
+  width: 10px;
+  height: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.full-page-indicators a.active span {
+  transition: all 900ms ease 0s;
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50px;
+  background-color: white;
+}
+</style>
