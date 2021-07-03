@@ -136,6 +136,9 @@ export default {
       if (e.target.classList.contains('indicator'))
         return this.scrollToSection(e.target.getAttribute('data-index'), true);
       
+      if (e.target.tagName.toLowerCase() === 'a')
+        return e.target.click()
+        
       this.touchStartY = e.changedTouches[0].screenY;
     },
 
