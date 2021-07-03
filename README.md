@@ -2,7 +2,7 @@
 
 Nuxt module for creating fullscreen page scroll fast and simple.
 
-- [Demo online](https://afgprogrammer.com/nuxt-fullpage)
+- [Demo online](https://codesandbox.io/s/openafgnuxt-fullpage-live-demo-c8qul)
 
 
 ## Table of contents
