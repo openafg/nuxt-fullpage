@@ -45,6 +45,8 @@ export default {
   mounted() {
     if (process.browser) {
       document.addEventListener('keydown', e => {
+        e.preventDefault()
+        
         if (e.keyCode == 40)
           return this.moveUp()
 
