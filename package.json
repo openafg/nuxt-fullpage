@@ -1,6 +1,6 @@
 {
   "name": "@openafg/nuxt-fullpage",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "description": "Nuxt module for creating fullscreen page scroll fast and simple.",
   "main": "lib/module.js",
   "scripts": {
